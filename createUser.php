@@ -1,79 +1,73 @@
 <?php
-	$inData = getRequestInfo();
-	
-	$userID = $inData["userID"];
-	$userFirstName = $inData["userFirstName"];
-	$userLastName = $inData["userLastName"];
-	$contactFirstName = $inData["contactFirstName"];
-	$contactLastName = $inData["contactLastName"];
-	$contactEmail = $inData["contactEmail"];
-	$contactPhoneNumber = $inData["contactPhoneNumber"];
 
-	$conn = new mysqli("localhost", "root", "Group23IsGoated", "COP4331");
-	if ($conn->connect_error) 
-	{
-		returnWithError( $conn->connect_error );
-	}
-	else
-	{
-		$stmt1 = $conn->prepare("SELECT * FROM Users WHERE ID=? AND FirstName=? AND LastName=?");
-		$stmt1->bind_param("iss", $userID, $userFirstName, $userLastName);
-		$stmt1->execute();
-		$result1 = $stmt1->get_result();
-		$stmt1->close();
 
-		if($row1 = $result1->fetch_assoc())
-		{
-			$stmt2 = $conn->prepare("SELECT * FROM Contacts WHERE UserID=? AND ContactFirstName=? AND ContactLastName=? AND ContactEmail=? AND ContactPhoneNumber=?");
-			$stmt2->bind_param("issss", $userID, $contactFirstName, $contactLastName, $contactEmail, $contactPhoneNumber);
-			$stmt2->execute();
-			$result2 = $stmt2->get_result();
-			$stmt2->close();
+$inData = getRequestInfo();
 
-			if($row2 = $result2->fetch_assoc())
-			{
-				returnWithError("Contact already exists");
-			}
-			else{
-					$stmt3 = $conn->prepare("INSERT into Contacts(UserID, UserFirstName, UserLastName, ContactFirstName, ContactLastName, ContactEmail, ContactPhoneNumber) VALUES(?,?,?,?,?,?,?)");
-					$stmt3->bind_param("issssss", $userID, $userFirstName, $userLastName, $contactFirstName, $contactLastName, $contactEmail, $contactPhoneNumber);
-					$stmt3->execute();
-					printf("Error message: %s\n", mysqli_error($conn));
-					$stmt3->close();
-					returnWithSuccess();
-			}
-		}
-		else
-		{
-			returnWithError("No such user exists");
-			$conn->close();
-		}
+$userID = $inData["ID"];
+$userFirstName = $inData["FirstName"];
+$userLastName = $inData["LastName"];
+$userEmail = $inData["Email"];
+$userPhone = $inData["Phone"];
+$userPassword = $inData["Password"];
 
-		$conn->close();
-	}
 
-	function getRequestInfo()
-	{
-		return json_decode(file_get_contents('php://input'), true);
-	}
 
-	function sendResultInfoAsJson( $obj )
-	{
-		header('Content-type: application/json');
-		echo $obj;
-	}
-	
-	function returnWithError( $err )
-	{
-		$retValue = '{"contactFirstName":"","contactLastName":"","contactEmail":"","contactPhoneNumber":"","error":"' . $err . '"}';
-		sendResultInfoAsJson( $retValue );
-	}
-	
-	function returnWithSuccess ()
-	{
-		global $contactFirstName, $contactLastName, $contactEmail, $contactPhoneNumber;
-		$retValue ='{"contactFirstName":"' . $contactFirstName . '","contactLastName":"' . $contactLastName . '","contactEmail":"' . $contactEmail . '","contactPhoneNumber":"' . $contactPhoneNumber . '","error":""}';
-		sendResultInfoAsJson( $retValue );
-	}
+$conn = new mysqli("localhost", "Tester", "Group12Rocks", "COP4331");
 
+if ($conn->connect_error) 
+{
+   returnWithError( $conn->connect_error );
+} 
+
+else
+{
+   $stmt1 = $conn->prepare("SELECT * FROM Users WHERE Email = ?");
+   $stmt1->bind_param("s", $userEmail);
+   $stmt1->execute();
+   $result = $stmt1->get_result();
+
+   $stmt1->close();
+
+   if($row = $result->fetch_assoc())
+   {
+      returnWithError("This Email is already in use!");
+   }
+   else
+   {
+      $stmt2 = $conn->prepare("INSERT INTO Users (ID, FirstName,LastName,Email,Phone,Password) VALUES (?,?,?,?,?,?)");
+      $stmt2->bind_param("issss", $userID, $userFirstName,$userLastName,$userEmail,$userPhone,$userPassword);
+      $stmt2->execute();
+      $addContact = $stmt2->get_result();
+      $stm2->close();
+      returnWithSuccess();
+
+   }
+
+}
+
+$conn->close();
+
+function getRequestInfo()
+{
+   return json_decode(file_get_contents('php://input'), true);
+}
+
+function sendResultInfoAsJson( $obj )
+{
+   header('Content-type: application/json');
+   echo $obj;
+}
+
+function returnWithError( $err )
+{
+   $retValue = '{"UserID":"0","FirstName":"","LastName":"","Email":"","Phone":"","error":"' . $err . '"}';
+   sendResultInfoAsJson( $retValue );
+}
+
+function returnWithSuccess ( )
+{
+   global $contactUserID, $contactEmail, $contactFirstName, $contactLastName, $contactPhoneNumber;
+   $retValue ='{"UserID":"'. $contactUserID .'","FirstName":"' . $contactFirstName . '","LastName":"' . $contactLastName . '","Email":"' . $contactEmail . '","Phone":"' . $contactPhoneNumber . '","error":""}';
+   sendResultInfoAsJson( $retValue );
+}
 ?>
