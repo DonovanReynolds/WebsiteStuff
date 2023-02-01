@@ -4,8 +4,10 @@
 $inData = getRequestInfo();
 
 
+
 //Get only the ID from that user to know which user we are looking at
 $userID = $inData["ID"];
+$userSearch = $inData["Search"];
 
 $finalContactsArray = array();
 
@@ -29,6 +31,8 @@ else
 
    $allContacts = array();
 
+
+
    //Decodes the mysqli object and puts into row
    while($row = $result->fetch_assoc())
    {
@@ -37,23 +41,56 @@ else
       $fetchedLastName = $row["LastName"];
       $fetchedEmail = $row["Email"];
       $fetchedPhone = $row["Phone"];
-
       //Echoes each contact as a JSON element
-
-      array_push($allContacts,array("FirstName" => $fetchedFirstName, "LastName" => $fetchedLastName, "Email" => $fetchedEmail, "Phone" => $fetchedPhone));
-
-      
+      array_push($allContacts, array("FirstName" => $fetchedFirstName, "LastName" => $fetchedLastName, "Email" => $fetchedEmail, "Phone" => $fetchedPhone));
 
 
    }
 
-   returnWithSuccess($allContacts);
+   $userSearch = strtolower($userSearch);
+   $finalSearchedArray = array();
 
-   $conn->close();
+   foreach($allContacts as $contact)
+   {
+      //echo "This is the search value: $userSearch";
+      //echo "\nThis is the current contact stuff\n";
+      //echo $contact["FirstName"];
+      //print_r($contact);
+
+
+      if(str_contains(strtolower($contact["FirstName"]),$userSearch))
+      {
+         array_push($finalSearchedArray, $contact);
+      }
+      if(str_contains(strtolower($contact["LastName"]),$userSearch))
+      {
+         array_push($finalSearchedArray, $contact);
+      }
+      if(str_contains(strtolower($contact["Email"]),$userSearch))
+      {
+         array_push($finalSearchedArray, $contact);
+      }
+
+      $phoneSplit = preg_split('/[-|)|(]/', $contact["Phone"],-1, PREG_SPLIT_NO_EMPTY);
+      $phoneOnlyNums = implode($phoneSplit);
+      
+
+      
+
+      if(str_contains($phoneOnlyNums,$userSearch))
+      {
+         array_push($finalSearchedArray, $contact);
+      }
+
+   }
+
+   returnWithSuccess($finalSearchedArray);
+
+
 
 }
 
-
+$conn->close();
 
 function getRequestInfo()
 {
@@ -63,7 +100,7 @@ function getRequestInfo()
 function sendResultInfoAsJson( $obj )
 {
    header('Content-type: application/json');
-   echo $obj;
+   print_r($obj);
 }
 
 function returnWithError( $err )
@@ -75,7 +112,6 @@ function returnWithError( $err )
 
 function returnWithSuccess ( $retValue )
 {
-
    sendResultInfoAsJson(json_encode($retValue));
 }
 ?>

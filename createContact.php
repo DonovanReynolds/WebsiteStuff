@@ -61,9 +61,6 @@ else
 
 
    $id = $row3["ID"];
-   echo $contactUserID;
-   echo $contactFirstName;
-   echo $contactLastName;
    
    returnWithSuccess($id);
    
